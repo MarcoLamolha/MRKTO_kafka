@@ -1,0 +1,11 @@
+streamlit
+requests
+pandas
+sqlalchemy
+python-dotenv
+matplotlib
+psycopg2-binary
+seaborn
+folium
+wordcloud
+streamlit-folium
