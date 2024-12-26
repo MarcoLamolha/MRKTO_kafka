@@ -44,10 +44,25 @@ def start_consumer():
 
 if __name__ == "__main__":
     # Start CSV generation and notification
-    csv_thread = threading.Thread(target=generate_csv_and_notify, daemon=True)
+    stop_event = threading.Event()
 
-    # Start Kafka consumer
-    consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+    def generate_csv_and_notify_with_stop():
+        while not stop_event.is_set():
+            generate_csv_and_notify()
+
+    def start_consumer_with_stop():
+        while not stop_event.is_set():
+            start_consumer()
+
+    csv_thread = threading.Thread(target=generate_csv_and_notify_with_stop)
+    csv_thread.join(timeout=65)
+    if csv_thread.is_alive():
+            print("CSV generation thread timed out.")
+        
+            consumer_thread.join(timeout=65)
+    if consumer_thread.is_alive():
+            print("Consumer thread timed out.")
+    consumer_thread = threading.Thread(target=start_consumer_with_stop)
 
     try:
         # Start both threads
@@ -56,8 +71,11 @@ if __name__ == "__main__":
 
         # Wait for threads to complete
         csv_thread.join()
-        consumer_thread.join()
+        import traceback
+        print(f"Error in main execution: {e}")
+        traceback.print_exc()
     except KeyboardInterrupt:
         print("Pipeline execution interrupted.")
+        stop_event.set()
     except Exception as e:
         print(f"Error in main execution: {e}")
